@@ -2,13 +2,16 @@
 
 namespace Tests\Feature;
 
-use App\Services\TodolistService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Support\Facades\Session;
+use App\Models\Todo;
 use Tests\TestCase;
-
+use App\Services\TodolistService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 use function PHPUnit\Framework\assertEquals;
+
+use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Testing\Assert;
 
 class TodolistServiceTest extends TestCase
 {
@@ -18,6 +21,7 @@ class TodolistServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        DB::delete('delete from todos');
         $this->todolistService = $this->app->make(TodolistService::class);
     }
 
@@ -29,20 +33,10 @@ class TodolistServiceTest extends TestCase
     public function test_save_todolist_success(){
         $this->todolistService->saveTodo("1", "walking");
 
-        $todolist = Session::get('todolist');
+        $todolist = Todo::query()->find(1)->first();
 
-        foreach ($todolist as $value) {
-            self::assertEquals($value['id'], "1");
-            self::assertEquals($value['todo'], "walking");
-        }
-    }
-
-    public function test_save_todolist_without_data(){
-        $this->todolistService->saveTodo("1", "walking");
-
-        $todolist = Session::get('todolist');
-
-        self::assertNotNull($todolist);
+        self::assertEquals($todolist->id, "1");
+        self::assertEquals($todolist->todo, "walking");
     }
 
     public function test_get_empty_todolist(){
@@ -63,7 +57,7 @@ class TodolistServiceTest extends TestCase
         $this->todolistService->saveTodo("1", "walking");
         $this->todolistService->saveTodo("2", "speaking");
 
-        self::assertEquals($expected, $this->todolistService->getTodo());
+        Assert::assertArraySubset($expected, $this->todolistService->getTodo());
     }
 
     public function test_remove_todolist(){

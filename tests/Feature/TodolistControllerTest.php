@@ -2,10 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Services\TodolistService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
+use App\Services\TodolistService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class TodolistControllerTest extends TestCase
 {
@@ -14,24 +15,16 @@ class TodolistControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        DB::delete('delete from todos');
 
         $this->todolistService = $this->app->make(TodolistService::class);
     }
 
     public function testTodolist()
     {
+        $this->todolistService->saveTodo("1", "walking");
         $this->withSession([
-            'username'=>'foo',
-            'todolist' => [
-                [
-                    'id' => "1",
-                    'todo' => 'walking'
-                ],
-                [
-                    'id' => "2",
-                    'todo' => 'speaking'
-                ],
-            ]
+            'username'=>'foo'
         ])->get('/todolist')
         ->assertSeeText("walking");
     }
@@ -55,18 +48,10 @@ class TodolistControllerTest extends TestCase
     }
 
     public function testRemoveTodoListSuccess(){
+        $this->todolistService->saveTodo("1", "walking");
+        $this->todolistService->saveTodo("2", "speaking");
         $this->withSession([
-            'username' => 'foo',
-            'todolist' => [
-                [
-                    'id' => "1",
-                    'todo' => 'testing 1'
-                ],
-                [
-                    'id' => "2",
-                    'todo' => 'testing 2'
-                ],
-            ]
+            'username' => 'foo'
         ])
         ->post('/todolist/1/delete')
         ->assertRedirect('/todolist');
